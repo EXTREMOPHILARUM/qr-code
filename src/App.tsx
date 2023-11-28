@@ -1,5 +1,8 @@
-import QRCode from 'react-qr-code';
+import React from 'react';
+import QRCode from 'qrcode';
 import { signal, effect } from '@preact/signals-react';
+import { Button, Input, Table, TableHeader,  TableBody,  TableColumn,  TableRow,  TableCell} from "@nextui-org/react";
+
 
 const inputText = signal('');
 const qrCodes = signal<string[]>([]);
@@ -41,45 +44,64 @@ function App() {
     qrCodes.value = qrCodes.value.filter((_, i) => i !== index);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    inputText.value = e.currentTarget.value;
+  const downloadQRCode = (code: string) => {
+    const canvas = document.createElement("qr-canvas " + code);
+    const qrCode = new QRCode(canvas, code);
+    const qrCodeDataURL = qrCode.toDataURL();
+    const link = document.createElement('a');
+    link.href = qrCodeDataURL;
+    link.download = `${code}.png`;
+    link.click();
   };
 
   return (
-    <div className="App">
-      <h1>QR Code Generator</h1>
-      <input
-        type="text"
+    <div className="App flex flex-col items-center p-4">
+    <h1 className="text-center text-2xl font-bold mb-6">QR Code Generator</h1>
+    <div className="flex flex-col md:flex-row justify-center items-center mb-6 w-full md:w-auto">
+      <Input
+        isClearable={true}
+        variant="bordered"
         placeholder="Enter text for QR code"
         value={inputText.value}
-        onChange={handleInputChange}
+        onChange={(e) => inputText.value = e.target.value}
+        className="mb-4 md:mb-0 md:mr-4 w-full md:w-auto"
       />
-      <button onClick={addQRCode}>Add QR Code</button>
-      <div>
-        <h2>Generated QR Codes</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Text</th>
-              <th>QR Code</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {qrCodes.value.map((code, index) => (
-              <tr key={index}>
-                <td>{code}</td>
-                <td><QRCode value={code} /></td>
-                <td>
-                  <button onClick={() => editQRCode(index)}>Edit</button>
-                  <button onClick={() => deleteQRCode(index)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Button onClick={addQRCode} className="w-full md:w-auto">Add QR Code</Button>
     </div>
+    <h2 className="text-center text-xl font-semibold mb-4">Generated QR Codes</h2>
+    <Table
+      aria-label="Generated QR Codes"
+      className='flex flex-col md:flex-row justify-center items-center mb-6 w-full md:w-auto'
+      selectionMode="none"
+    >
+      <TableHeader>
+        <TableColumn>Text</TableColumn>
+        <TableColumn>QR Code</TableColumn>
+        <TableColumn>Actions</TableColumn>
+      </TableHeader>
+      <TableBody>
+        {qrCodes.value.map((code, index) => (
+          <TableRow key={index}>
+            <TableCell>{code}</TableCell>
+            <TableCell> </TableCell>
+            <TableCell>
+              <div className="flex justify-center">
+                <Button size="sm" color="primary" onClick={() => editQRCode(index)} className="mr-2">
+                  Edit
+                </Button>
+                <Button size="sm" color="danger" onClick={() => deleteQRCode(index)}>
+                  Delete
+                </Button>
+                <Button size="sm" color="success" onClick={() => downloadQRCode(code)}>
+                  Download
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
   );
 }
 
